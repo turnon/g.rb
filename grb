@@ -1,5 +1,7 @@
 #!/bin/env ruby
 
+# notice : if you want to pass backslash to grep, wrap it with quotes
+
 # get -name option for find
 
 filename_pattern = nil
