@@ -6,15 +6,23 @@ filename_pattern = nil
 
 keys = []
 
+add_key = Proc.new do |k, op|
+  if keys.empty?
+    keys << "#{op} '#{k}' "
+  else
+    keys << "#{op} ':.*#{k}' "
+  end
+end
+
 until ARGV.empty?
   opt = ARGV.shift
   case opt
   when '-f'
     filename_pattern = " -name #{ARGV.shift} "
   when '-i'
-    keys << "-i '#{ARGV.shift}' "
+    add_key.call ARGV.shift, '-i'
   else
-    keys << "'#{opt}' "
+    add_key.call opt
   end
 end
 
