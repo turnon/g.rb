@@ -2,30 +2,34 @@
 
 # get -name option for find
 
-filename_pattern=nil
+filename_pattern = nil
 
-require 'optparse'
+keys = []
 
-option_parser = OptionParser.new do |opts|
-  opts.on "-f pattern" do |f| 
-    filename_pattern = " -name #{f} "
+until ARGV.empty?
+  opt = ARGV.shift
+  case opt
+  when '-f'
+    filename_pattern = " -name #{ARGV.shift} "
+  when '-i'
+    keys << "-i '#{ARGV.shift}' "
+  else
+    keys << "'#{opt}' "
   end
 end
 
-option_parser.parse!
-
 # check ARGV
 
-if ARGV.empty?
+if keys.empty?
   puts 'no argv 1'
   exit
 end
 
 # concat cmd
 
-cmd="find -type f #{filename_pattern} | xargs egrep -H '#{ARGV.shift}'"
+cmd="find -type f #{filename_pattern} | xargs egrep -H #{keys.shift}"
 
-cmd += " | grep -e '#{ARGV.shift}'" until ARGV.empty?
+cmd += " | grep -E #{keys.shift}" until keys.empty?
 
 # execute cmd
 
