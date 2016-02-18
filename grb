@@ -1,0 +1,32 @@
+#!/bin/env ruby
+
+# get -name option for find
+
+filename_pattern=nil
+
+require 'optparse'
+
+option_parser = OptionParser.new do |opts|
+  opts.on "-f pattern" do |f| 
+    filename_pattern = " -name #{f} "
+  end
+end
+
+option_parser.parse!
+
+# check ARGV
+
+if ARGV.empty?
+  puts 'no argv 1'
+  exit
+end
+
+# concat cmd
+
+cmd="find -type f #{filename_pattern} | xargs egrep -H '#{ARGV.shift}'"
+
+cmd += " | grep -e '#{ARGV.shift}'" until ARGV.empty?
+
+# execute cmd
+
+puts cmd unless system cmd
