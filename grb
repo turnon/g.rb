@@ -4,8 +4,8 @@
 
 # get -name option for find
 
+debug = false
 filename_pattern = nil
-
 keys = []
 
 add_key = Proc.new do |k, op|
@@ -19,6 +19,8 @@ end
 until ARGV.empty?
   opt = ARGV.shift
   case opt
+  when '---debug'
+    debug = true
   when '-f'
     filename_pattern = " -name #{ARGV.shift} "
   when '-i'
@@ -43,4 +45,4 @@ cmd += " | grep -E #{keys.shift}" until keys.empty?
 
 # execute cmd
 
-puts cmd unless system cmd
+puts "\n-> #{cmd}" if not system cmd or debug
