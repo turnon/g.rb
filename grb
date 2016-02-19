@@ -2,13 +2,55 @@
 
 # helper
 
+class MyMatchData
+
+  attr_reader :pre_match, :post_match
+
+  def initialize(str, pre_end, match_end)
+    @org = str
+    @pre_match = str.slice 0, pre_end
+    @m = str.slice pre_end, match_end - pre_end
+    @post_match = str.slice match_end, str.size
+  end
+
+  def [](i)
+    case i
+    when 0
+      @org
+    when 1
+      @m
+    else
+      nil
+    end
+  end
+end
+
 class String
   def cyan
     "\e[36m#{self}\e[0m"
   end
 
+  def underline
+    "\e[4m#{self}\e[24m"
+  end
+
   def pad(n)
     "%-#{n}s" % self
+  end
+
+  alias_method :old_match, :match
+
+  def match(keys)
+    if keys.is_a? Array
+      ms = keys.map{|k| old_match k}
+      return nil if ms.any?{|m| m.nil?}
+      positions = ms.map{|m| [m.pre_match.size, m.pre_match.size + m[0].size]}
+                    .sort!{|a, b| a <=> b }
+
+      MyMatchData.new self, positions.first.first, positions.last.last
+    else
+      old_match keys
+    end
   end
 end
 
@@ -50,11 +92,11 @@ files.select!{|path| File.basename(path).match file_pattern} if file_pattern
 rs = files.map do |path|
        line_no = 0
        match_lines = File.readlines(path).each_with_index.map do |line, line_no|
-                       [line_no + 1, line]
-                     end.select do |line_no, line|
-                       keys.all?{|k| k =~ line}
+                       [line_no + 1, line.match(keys)]
+                     end.select do |line_no, match|
+                       not match.nil?
                      end.map do |line_no, line|
-                       line_no.to_s.pad(4) + ": " + line
+                       line_no.to_s.pad(4) + ": " + line.pre_match + line[1].underline + line.post_match
                      end
        [(path + ' :').cyan, match_lines, nil]
      end.select do |_, match|
