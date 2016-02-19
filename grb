@@ -35,7 +35,7 @@ class String
   end
 
   def pad(n)
-    "%-#{n}s" % self
+    "%#{n}s" % self
   end
 
   alias_method :old_match, :match
