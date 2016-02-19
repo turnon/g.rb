@@ -1,48 +1,52 @@
 #!/bin/env ruby
 
-# notice : if you want to pass backslash to grep, wrap it with quotes
+# variable for pattern
 
-# get -name option for find
-
-debug = false
-filename_pattern = nil
+file_pattern = nil
 keys = []
 
-add_key = Proc.new do |k, op|
-  if keys.empty?
-    keys << "#{op} '#{k}' "
-  else
-    keys << "#{op} ':.*#{k}' "
+# parse options and arguments
+
+require 'optparse'
+
+OptionParser.new do |opts|
+
+  opts.on "-f pattern" do |p|
+    file_pattern = Regexp.new(p)
   end
-end
 
-until ARGV.empty?
-  opt = ARGV.shift
-  case opt
-  when '---debug'
-    debug = true
-  when '-f'
-    filename_pattern = " -name #{ARGV.shift} "
-  when '-i'
-    add_key.call ARGV.shift, '-i'
-  else
-    add_key.call opt
+  opts.on "-F pattern" do |p|
+    file_pattern = Regexp.new(p, true)
   end
-end
 
-# check ARGV
+  opts.on "-i re" do |r|
+    keys << Regexp.new(r, true)
+  end
 
-if keys.empty?
-  puts 'no argv 1'
-  exit
-end
+end.parse!
 
-# concat cmd
+keys.concat ARGV.map{|arg| Regexp.new arg}
 
-cmd="find -type f #{filename_pattern} | xargs egrep -H #{keys.shift}"
+# find files
 
-cmd += " | grep -E #{keys.shift}" until keys.empty?
+files = Dir.glob("**/*").select!{|path| File.file? path}
 
-# execute cmd
+files.select!{|path| File.basename(path).match file_pattern} if file_pattern
 
-puts "\n-> #{cmd}" if not system cmd or debug
+# match
+
+rs = files.map do |path|
+       line_no = 0
+       match_lines = File.readlines(path).each_with_index.map do |line, line_no|
+                       [line_no + 1, line]
+                     end.select do |line_no, line|
+                       keys.all?{|k| k =~ line}
+                     end.map do |line_no, line|
+                       line_no.to_s + " : " + line
+                     end
+       [path + ' :', match_lines, nil]
+     end.select do |_, match|
+       not match.empty?
+     end
+
+puts rs
