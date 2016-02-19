@@ -1,5 +1,17 @@
 #!/bin/env ruby
 
+# helper
+
+class String
+  def cyan
+    "\e[36m#{self}\e[0m"
+  end
+
+  def pad(n)
+    "%-#{n}s" % self
+  end
+end
+
 # variable for pattern
 
 file_pattern = nil
@@ -42,9 +54,9 @@ rs = files.map do |path|
                      end.select do |line_no, line|
                        keys.all?{|k| k =~ line}
                      end.map do |line_no, line|
-                       line_no.to_s + " : " + line
+                       line_no.to_s.pad(4) + ": " + line
                      end
-       [path + ' :', match_lines, nil]
+       [(path + ' :').cyan, match_lines, nil]
      end.select do |_, match|
        not match.empty?
      end
