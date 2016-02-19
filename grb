@@ -40,10 +40,11 @@ class String
 
   alias_method :old_match, :match
 
-  def match(keys)
+  def match(keys, *not_keys)
     if keys.is_a? Array
       ms = keys.map{|k| old_match k}
       return nil if ms.any?{|m| m.nil?}
+      return nil if not not_keys.empty? and not_keys.first.any?{|k| old_match k}
       positions = ms.map{|m| [m.pre_match.size, m.pre_match.size + m[0].size]}
                     .sort!{|a, b| a <=> b }
 
@@ -58,6 +59,7 @@ end
 
 file_pattern = nil
 keys = []
+not_keys = []
 
 # parse options and arguments
 
@@ -77,6 +79,10 @@ OptionParser.new do |opts|
     keys << Regexp.new(r, true)
   end
 
+  opts.on "-n re" do |r|
+    not_keys << Regexp.new(r, true)
+  end
+
 end.parse!
 
 keys.concat ARGV.map{|arg| Regexp.new arg}
@@ -92,7 +98,7 @@ files.select!{|path| File.basename(path).match file_pattern} if file_pattern
 rs = files.map do |path|
        line_no = 0
        match_lines = File.readlines(path).each_with_index.map do |line, line_no|
-                       [line_no + 1, line.match(keys)]
+                       [line_no + 1, line.match(keys, not_keys)]
                      end.select do |line_no, match|
                        not match.nil?
                      end.map do |line_no, line|
