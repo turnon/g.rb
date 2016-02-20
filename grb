@@ -80,6 +80,10 @@ OptionParser.new do |opts|
   end
 
   opts.on "-n re" do |r|
+    not_keys << Regexp.new(r)
+  end
+
+  opts.on "-N re" do |r|
     not_keys << Regexp.new(r, true)
   end
 
