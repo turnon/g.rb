@@ -2,10 +2,10 @@
 
 require 'my_match_data'
 require 'string'
+require 'array'
 require 'line'
 
 line_no_formater = lambda do |line|
-                     return nil if line.nil?
                      (line.no + 1).to_s.pad(4) + ": " + (line.nil? ? '' :line)
                    end
 
@@ -69,12 +69,23 @@ rs = files.map do |path|
        match_lines = all_lines.select{|line| line.match?}
 
        if around
-         match_lines.map! do |line|
-           match_line_with_arounds = all_lines[(line.no < around ? 0 : line.no - around)..(line.no - 1)] +
-                                     [line] +
-                                     all_lines[(line.no + 1)..(line.no + around)] +
-                                     [nil] # this nil is to add blank line between every match
-           match_line_with_arounds.map! &line_no_formater
+         merged_line_range = match_lines.map do |line|
+                               (line.no < around ? 0 : line.no - around)..(line.no + around)
+                             end.reduce([]) do |result, this| # the ranges are sorted and their size are all same
+                               prev = result.last
+                               if prev.nil? or not prev.cover? this.begin
+                                 result << this
+                               else
+                                 result.pop
+                                 result << (prev.begin .. this.end)
+                               end
+                               result
+                             end
+
+         match_lines = all_lines[merged_line_range]
+         match_lines.map! do |lines|
+           lines.map! &line_no_formater
+           lines << nil # this nil is to add blank line between every match
          end
        else
          match_lines.map! &line_no_formater
