@@ -1,65 +1,7 @@
-#!/bin/env ruby
-
 # helper
 
-class MyMatchData
-
-  attr_reader :pre_match, :post_match
-
-  def initialize(str, pre_end, match_end)
-    @org = str
-    @pre_match = str.slice 0, pre_end
-    @m = str.slice pre_end, match_end - pre_end
-    @post_match = str.slice match_end, str.size
-  end
-
-  def [](i)
-    case i
-    when 0
-      @org
-    when 1
-      @m
-    else
-      nil
-    end
-  end
-end
-
-class String
-  def cyan
-    "\e[36m#{self}\e[0m"
-  end
-
-  def highlight
-    "\e[44m#{self}\e[0m"
-  end
-
-  def pad(n)
-    "%#{n}s" % self
-  end
-
-  alias_method :old_match, :match
-
-  def match(keys, *not_keys)
-    if keys.is_a? Array
-      ms = keys.map{|k| old_match k}
-      return nil if ms.any?{|m| m.nil?}
-      return nil if not not_keys.empty? and not_keys.first.any?{|k| old_match k}
-      positions = ms.map{|m| [m.pre_match.size, m.pre_match.size + m[0].size]}
-                    .sort!{|a, b| a <=> b }
-
-      MyMatchData.new self, positions.first.first, positions.last.last
-    else
-      old_match keys
-    end
-  end
-
-  def match_and_highlight(keys, *not_keys)
-    md = match(keys, *not_keys)
-    return (md.pre_match + md[1].highlight + md.post_match) if md
-    return nil
-  end
-end
+require 'my_match_data'
+require 'string'
 
 line_no_formater = lambda do |no, line|
                      return nil if no.nil?
