@@ -52,7 +52,7 @@ keys.concat ARGV.map{|arg| Regexp.new arg}
 
 # find files
 
-files = Dir.glob("**/*").select!{|path| File.file? path}
+files = Dir.glob("**/*").select{|path| File.file? path}
 
 files.select!{|path| File.basename(path).match file_pattern} if file_pattern
 
