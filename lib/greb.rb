@@ -58,9 +58,14 @@ files.select!{|path| File.basename(path).match file_pattern} if file_pattern
 
 # match
 
+require "rchardet"
+
 rs = files.map do |path|
 
-       all_lines = File.readlines(path).each_with_index.map do |line, line_no|
+       content = File.read path
+       content.force_encoding CharDet.detect(content)['encoding']
+
+       all_lines = content.lines.each_with_index.map do |line, line_no|
                      l = Line.new(line, line_no)
                      l.match(keys, not_keys)
                      l
