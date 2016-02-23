@@ -24,6 +24,30 @@ class MatchFile
                    end
   end
 
+  def match_all_in_file(keys, *not_keys)
+
+    key_hash = Hash[*(keys.map{|k| [k, nil]}.flatten)]
+
+    @match_lines = @all_lines.map do |line|
+                     positions = keys.map do |k|
+                                   m = line.match([k], *not_keys)
+                                   key_hash[k] = m unless m.nil?
+                                   m
+                                 end.select do |m|
+                                   not m.nil?
+                                 end.map do |m|
+                                   m.position
+                                 end
+                     line.match = MyMatchData.new line.content, positions unless positions.empty?
+                     line
+                   end.select do |line|
+                     line.match?
+                   end
+
+    @match_lines = [] if key_hash.any?{|k, m| m.nil?}
+
+  end
+
   def match?
     not @match_lines.empty?
   end

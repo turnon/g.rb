@@ -1,6 +1,7 @@
 class Line
 
-  attr_reader :no
+  attr_reader :content, :no
+  attr_writer :match
 
   def initialize(content, no)
     @content = content
@@ -12,8 +13,7 @@ class Line
     return if ms.any?{|m| m.nil?}
     return if not not_keys.empty? and not_keys.first.any?{|k| @content.match k}
     positions = ms.map{|m| [m.pre_match.size, m.pre_match.size + m[0].size]}
-                  .sort!{|a, b| a <=> b }    
-    @md = MyMatchData.new @content, positions.first.first, positions.last.last
+    @md = MyMatchData.new @content, positions
   end
 
   def match?

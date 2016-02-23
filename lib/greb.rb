@@ -16,6 +16,7 @@ file_pattern = nil
 keys = []
 not_keys = []
 around = nil
+in_file = false
 
 # parse options and arguments
 
@@ -47,6 +48,10 @@ OptionParser.new do |opts|
     around = a.to_i
   end
 
+  opts.on "--in-file" do
+    in_file = true
+  end
+
 end.parse!
 
 keys.concat ARGV.map{|arg| Regexp.new arg}
@@ -61,15 +66,22 @@ files.select!{|path| File.basename(path).match file_pattern} if file_pattern
 
 rs = files.map do |path|
        f = MatchFile.new path
-       f.match keys, not_keys
+       if in_file
+         f.match_all_in_file keys, not_keys
+       else
+         f.match keys, not_keys
+       end
        f.context around if around
        f
      end.select do |file|
        file.match?
      end.map do |file|
        (file.path + ' :').cyan + "\n" + (file.match_lines.map do |line|
-         return line_no_formater.call line unless line.is_a? Array
-         (line.map &line_no_formater).join + "\n"
+         unless line.is_a? Array
+           line_no_formater.call line
+         else
+           (line.map &line_no_formater).join + "\n"
+         end
        end).join + "\n"
      end
 
