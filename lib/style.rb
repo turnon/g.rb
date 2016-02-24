@@ -32,11 +32,11 @@ module Style
 
                   lines_set = file.all_lines[merged_line_range]
 
-                  Name.call(file) + NL + (LinesSet.call lines_set) + NL + NL
+                  Name[file] + NL + LinesSet[lines_set] + NL + NL
                }
             }
 
-  All = ->(file) { Name.call(file) + NL + (Lines.call file.match_lines) + NL + NL}
+  All = ->(file) { Name[file] + NL + Lines[file.match_lines] + NL + NL}
 
   Path = ->(file) {file.path + NL}
 

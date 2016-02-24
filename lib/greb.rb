@@ -40,7 +40,7 @@ OptionParser.new do |opts|
   end
 
   opts.on "-a around" do |a|
-    output = Style::Context.call a.to_i
+    output = Style::Context[a.to_i]
   end
 
   opts.on "--in-file" do
