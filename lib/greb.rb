@@ -1,6 +1,5 @@
 # helper
 
-require 'my_match_data'
 require 'string'
 require 'array'
 require 'line'

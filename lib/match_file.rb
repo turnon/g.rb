@@ -17,34 +17,28 @@ class MatchFile
   end
 
   def match(keys, *not_keys)
-    @match_lines = @all_lines.each do |line|
-                     line.match(keys, *not_keys)
-                   end.select do |line|
-                     line.match?
+    @match_lines = @all_lines.map do |line|
+                     [line, line.match(keys, *not_keys)]
+                   end.select do |line, key_and_match|
+                     key_and_match.all?{|key, match| match}
+                   end.map do |line, k_m|
+                     line
                    end
   end
 
   def match_all_in_file(keys, *not_keys)
 
-    key_hash = Hash[*(keys.map{|k| [k, nil]}.flatten)]
+    key_match_hash = @all_lines.map do |line|
+                       Hash[*(line.match(keys, *not_keys)).flatten]
+                     end.reduce(Hash[*(keys.map{|k| [k, nil]}.flatten)]) do |result, k_m_hsh|
+                       result.merge(k_m_hsh){|k, v1, v2| v1 or v2 }
+                     end
 
-    @match_lines = @all_lines.map do |line|
-                     positions = keys.map do |k|
-                                   m = line.match([k], *not_keys)
-                                   key_hash[k] = m unless m.nil?
-                                   m
-                                 end.select do |m|
-                                   not m.nil?
-                                 end.map do |m|
-                                   m.position
-                                 end
-                     line.match = MyMatchData.new line.content, positions unless positions.empty?
-                     line
-                   end.select do |line|
-                     line.match?
+    @match_lines = if key_match_hash.all?{|k, m| m}
+                     @all_lines.select{|line| line.match?}
+                   else
+                     []
                    end
-
-    @match_lines = [] if key_hash.any?{|k, m| m.nil?}
 
   end
 
