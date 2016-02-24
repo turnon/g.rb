@@ -1,9 +1,9 @@
 # helper
 
-require 'my_match_data'
 require 'string'
 require 'array'
 require 'line'
+require 'match_file'
 
 line_no_formater = lambda do |line|
                      (line.no + 1).to_s.pad(4) + ": " + (line.nil? ? '' :line)
@@ -15,6 +15,7 @@ file_pattern = nil
 keys = []
 not_keys = []
 around = nil
+in_file = false
 
 # parse options and arguments
 
@@ -46,6 +47,10 @@ OptionParser.new do |opts|
     around = a.to_i
   end
 
+  opts.on "--in-file" do
+    in_file = true
+  end
+
 end.parse!
 
 keys.concat ARGV.map{|arg| Regexp.new arg}
@@ -58,48 +63,25 @@ files.select!{|path| File.basename(path).match file_pattern} if file_pattern
 
 # match
 
-require "rchardet"
-
 rs = files.map do |path|
-
-       content = File.read path
-       content.force_encoding CharDet.detect(content)['encoding']
-
-       all_lines = content.lines.each_with_index.map do |line, line_no|
-                     l = Line.new(line, line_no)
-                     l.match(keys, not_keys)
-                     l
-                   end
-
-       match_lines = all_lines.select{|line| line.match?}
-
-       if around
-         merged_line_range = match_lines.map do |line|
-                               (line.no < around ? 0 : line.no - around)..(line.no + around)
-                             end.reduce([]) do |result, this| # the ranges are sorted and their size are all same
-                               prev = result.last
-                               if prev.nil? or not prev.cover? this.begin
-                                 result << this
-                               else
-                                 result.pop
-                                 result << (prev.begin .. this.end)
-                               end
-                               result
-                             end
-
-         match_lines = all_lines[merged_line_range]
-         match_lines.map! do |lines|
-           lines.map! &line_no_formater
-           lines << nil # this nil is to add blank line between every match
-         end
+       f = MatchFile.new path
+       if in_file
+         f.match_all_in_file keys, not_keys
        else
-         match_lines.map! &line_no_formater
+         f.match keys, not_keys
        end
-
-       [(path + ' :').cyan, match_lines, nil] # this nil is to add blank line between every file
-
-     end.select do |_, match|
-       not match.empty?
+       f.context around if around
+       f
+     end.select do |file|
+       file.match?
+     end.map do |file|
+       (file.path + ' :').cyan + "\n" + (file.match_lines.map do |line|
+         unless line.is_a? Array
+           line_no_formater.call line
+         else
+           (line.map &line_no_formater).join + "\n"
+         end
+       end).join + "\n"
      end
 
 puts rs
