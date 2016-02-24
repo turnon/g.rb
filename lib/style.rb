@@ -5,14 +5,19 @@ module Style
 
   NL = "\n"
 
+  # file name
   Name = ->(file) {(file.path + ' :').cyan}
 
+  # always with line number
   Line = ->(line) {(line.no + 1).to_s.pad(4) + ": " + (line.nil? ? '' :line)}
 
+  # add newline for each line, since chomped
   Lines = ->(lines) { (lines.map &Line).join NL }
 
+  # have blank lines between lines sets
   LinesSet = ->(ls) { (ls.map &Lines).join(NL * 2) }
 
+  # show macth lines and context
   Context = ->(around) {
                ->(file) {
                   merged_line_range =
@@ -36,8 +41,10 @@ module Style
                }
             }
 
+  # show macth lines
   All = ->(file) { Name[file] + NL + Lines[file.match_lines] + NL + NL}
 
+  # just show file path
   Path = ->(file) {file.path + NL}
 
 end
