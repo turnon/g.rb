@@ -1,6 +1,5 @@
 # helper
 
-require 'array'
 require 'line'
 require 'match_file'
 require 'style'
@@ -41,7 +40,7 @@ OptionParser.new do |opts|
   end
 
   opts.on "-a around" do |a|
-    around = a.to_i
+    output = Style::Context.call a.to_i
   end
 
   opts.on "--in-file" do
@@ -71,7 +70,6 @@ rs = files.map do |path|
        else
          f.match keys, not_keys
        end
-       f.context around if around
        f
      end.select do |file|
        file.match?
