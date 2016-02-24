@@ -1,13 +1,8 @@
 # helper
 
-require 'string'
-require 'array'
 require 'line'
 require 'match_file'
-
-line_no_formater = lambda do |line|
-                     (line.no + 1).to_s.pad(4) + ": " + (line.nil? ? '' :line)
-                   end
+require 'style'
 
 # variable for pattern
 
@@ -16,6 +11,7 @@ keys = []
 not_keys = []
 around = nil
 in_file = false
+output = Style::All
 
 # parse options and arguments
 
@@ -44,11 +40,15 @@ OptionParser.new do |opts|
   end
 
   opts.on "-a around" do |a|
-    around = a.to_i
+    output = Style::Context[a.to_i]
   end
 
   opts.on "--in-file" do
     in_file = true
+  end
+
+  opts.on "--path" do
+    output = Style::Path
   end
 
 end.parse!
@@ -70,18 +70,9 @@ rs = files.map do |path|
        else
          f.match keys, not_keys
        end
-       f.context around if around
        f
      end.select do |file|
        file.match?
-     end.map do |file|
-       (file.path + ' :').cyan + "\n" + (file.match_lines.map do |line|
-         unless line.is_a? Array
-           line_no_formater.call line
-         else
-           (line.map &line_no_formater).join + "\n"
-         end
-       end).join + "\n"
-     end
+     end.map &output
 
 puts rs
