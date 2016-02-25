@@ -8,8 +8,14 @@ class Line
     @no = no
   end
 
-  def match(keys, *not_keys)
-    @k_m = keys.map{|k| [k, @content.match(k) ] }
+  def match(keys, *not_keys, &decode)
+    @k_m =
+      begin
+        key_and_match keys
+      rescue
+        decode[@content]
+        key_and_match keys
+      end
     @k_m.map!{|k, m| [k, nil]} if not not_keys.empty? and not_keys.first.any?{|k| @content.match k}
     @k_m
   end
@@ -45,4 +51,9 @@ class Line
     def highlight(str)
       "\e[44m#{str}\e[0m"
     end
+
+    def key_and_match(keys)
+      keys.map{|k| [k, @content.match(k) ] }
+    end
+
 end
