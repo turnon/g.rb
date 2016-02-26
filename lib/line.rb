@@ -1,3 +1,5 @@
+require "rchardet"
+
 class Line
 
   attr_reader :content, :no
@@ -8,12 +10,12 @@ class Line
     @no = no
   end
 
-  def match(keys, *not_keys, &decode)
+  def match(keys, *not_keys)
     @k_m =
       begin
         key_and_match keys
       rescue
-        decode[@content]
+        decode
         key_and_match keys
       end
     @k_m.map!{|k, m| [k, nil]} if not not_keys.empty? and not_keys.first.any?{|k| @content.match k}
@@ -50,6 +52,10 @@ class Line
 
     def highlight(str)
       "\e[44m#{str}\e[0m"
+    end
+
+    def decode
+      @content.force_encoding CharDet.detect(@content)['encoding']
     end
 
     def key_and_match(keys)
