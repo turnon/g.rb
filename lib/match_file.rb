@@ -1,5 +1,3 @@
-require "rchardet"
-
 class MatchFile
 
   attr_reader :path, :match_lines, :all_lines
@@ -10,8 +8,6 @@ class MatchFile
 
     @content = File.read path
 
-    @encoding = ->(str){str.force_encoding(@ec ||= CharDet.detect(@content)['encoding'])}
-
     @all_lines = @content.lines.each_with_index.map do |line, line_no|
                    Line.new(line.chomp, line_no)
                  end    
@@ -19,7 +15,7 @@ class MatchFile
 
   def match(keys, *not_keys)
     @match_lines = @all_lines.map do |line|
-                     [line, line.match(keys, *not_keys, &@encoding)]
+                     [line, line.match(keys, *not_keys)]
                    end.select do |line, key_and_match|
                      key_and_match.all?{|key, match| match}
                    end.map do |line, k_m|
@@ -30,7 +26,7 @@ class MatchFile
   def match_all_in_file(keys, *not_keys)
 
     key_match_hash = @all_lines.map do |line|
-                       Hash[*(line.match(keys, *not_keys, &@encoding)).flatten]
+                       Hash[*(line.match(keys, *not_keys)).flatten]
                      end.reduce(Hash[*(keys.map{|k| [k, nil]}.flatten)]) do |result, k_m_hsh|
                        result.merge(k_m_hsh){|k, v1, v2| v1 or v2 }
                      end
