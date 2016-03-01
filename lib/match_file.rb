@@ -6,9 +6,9 @@ class MatchFile
   def initialize(path)
     @path = path
 
-    @content = File.read path
+    content = File.read path, encoding: 'utf-8'
 
-    @all_lines = @content.lines.each_with_index.map do |line, line_no|
+    @all_lines = content.lines.each_with_index.map do |line, line_no|
                    Line.new(line.chomp, line_no)
                  end    
   end
