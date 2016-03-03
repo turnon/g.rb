@@ -5,20 +5,15 @@ class Line
   attr_reader :content, :no
   attr_writer :match
 
-  def initialize(content, no)
+  def initialize(content, no, file)
     @content = content
     @no = no
+    @file = file
   end
 
   def match(keys, *not_keys)
-    @k_m =
-      begin
-        key_and_match keys
-      rescue
-        decode
-        key_and_match keys
-      end
-    @k_m.map!{|k, m| [k, nil]} if not not_keys.empty? and not_keys.first.any?{|k| @content.match k}
+    @k_m = key_and_match keys
+    @k_m.map!{|k, m| [k, nil]} if not not_keys.empty? and not_keys.first.any?{|k| k.match(@content) }
     @k_m
   end
 
@@ -55,11 +50,20 @@ class Line
     end
 
     def decode
-      @content.force_encoding CharDet.detect(@content)['encoding']
+      @tried_decode = true
+      enco = CharDet.detect(@content)['encoding']
+      @content.force_encoding enco unless enco.nil?
     end
 
     def key_and_match(keys)
-      keys.map{|k| [k, @content.match(k) ] }
+      keys.map{|k| [k, k.match(@content) ] }
+    rescue
+      if @tried_decode
+        raise "#{@file.path} -> #{@no}"
+      else
+        decode
+        retry
+      end
     end
 
 end
